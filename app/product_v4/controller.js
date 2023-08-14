@@ -1,8 +1,5 @@
 const Product = require("./model");
-const path = require("path");
-const fs = require("fs");
-const AWS = require("aws-sdk");
-const s3 = new AWS.S3();
+const cloudinary = require("../../config/cloudinary");
 
 const index = (req, res) => {
   const { search } = req.query;
@@ -28,22 +25,12 @@ const view = (req, res) => {
     .catch((error) => res.send(error));
 };
 
-const store = (req, res) => {
+const store = async (req, res) => {
   const { name, price, stock, status } = req.body;
   const image = req.file;
-  if (!image) {
-    return res.status(400).send({ message: "Image is required." });
-  }
-  const params = {
-    Bucket: process.env.CYCLIC_BUCKET_NAME,
-    Key: `uploads/${image.originalname}`,
-    Body: fs.createReadStream(image.path),
-  };
-  s3.upload(params, (err, data) => {
-    if (err) {
-      return res.status(500).send({ message: "Error uploading image to S3." });
-    }
-    const imageUrl = data.Location;
+  if (image) {
+    const uploadedImage = await cloudinary.uploader.upload(image.path);
+    const imageUrl = uploadedImage.secure_url;
     Product.create({
       name,
       price,
@@ -53,41 +40,24 @@ const store = (req, res) => {
     })
       .then((result) => res.send(result))
       .catch((error) => res.send(error));
-  });
+  }
 };
 
-const update = (req, res) => {
+const update = async (req, res) => {
   const { name, price, stock, status } = req.body;
   const image = req.file;
-  const updateData = {
+  let updateData = {
     name: name,
     price: price,
     stock: stock,
     status: status,
   };
   if (image) {
-    const params = {
-      Bucket: "your-s3-bucket-name",
-      Key: `product-images/${image.originalname}`,
-      Body: fs.createReadStream(image.path),
-    };
-    s3.upload(params, (err, data) => {
-      if (err) {
-        return res
-          .status(500)
-          .send({ message: "Error uploading image to S3." });
-      }
-      const imageUrl = data.Location;
-      updateData.image_url = imageUrl;
-      updateProduct(updateData, req.params.id, res);
-    });
-  } else {
-    updateProduct(updateData, req.params.id, res);
+    const uploadedImage = await cloudinary.uploader.upload(image.path);
+    const imageUrl = uploadedImage.secure_url;
+    updateData.image_url = imageUrl;
   }
-};
-
-const updateProduct = (updateData, productId, res) => {
-  Product.findByIdAndUpdate(productId, updateData, { new: true })
+  Product.findByIdAndUpdate(req.params.id, updateData, { new: true })
     .then((updatedProduct) => {
       if (updatedProduct) {
         res.send(updatedProduct);
