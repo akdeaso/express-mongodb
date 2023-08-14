@@ -37,14 +37,20 @@ const store = (req, res) => {
     const params = {
       Bucket: process.env.CYCLIC_BUCKET_NAME,
       Key: image.originalname,
-      Body: fs.createReadStream(image.path),
+      Body: JSON.stringify({
+        name,
+        price,
+        stock,
+        status,
+        image_url: `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`,
+      }),
     };
 
-    s3.upload(params, (err, data) => {
+    s3.putObject(params, (err, data) => {
       if (err) {
         res.send(err);
       } else {
-        const imageUrl = data.Location;
+        const imageUrl = `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`;
         Product.create({
           name,
           price,
@@ -74,14 +80,20 @@ const update = (req, res) => {
     const params = {
       Bucket: process.env.CYCLIC_BUCKET_NAME,
       Key: image.originalname,
-      Body: fs.createReadStream(image.path),
+      Body: JSON.stringify({
+        name,
+        price,
+        stock,
+        status,
+        image_url: `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`,
+      }),
     };
 
-    s3.upload(params, (err, data) => {
+    s3.putObject(params, (err, data) => {
       if (err) {
         res.send(err);
       } else {
-        const imageUrl = data.Location;
+        const imageUrl = `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`;
         updateData.image_url = imageUrl;
 
         Product.findByIdAndUpdate(req.params.id, updateData, { new: true })
