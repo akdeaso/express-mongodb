@@ -1,6 +1,9 @@
 const Product = require("./model");
 const path = require("path");
 const fs = require("fs");
+const AWS = require("aws-sdk");
+const s3 = new AWS.S3();
+require("dotenv").config();
 
 const index = (req, res) => {
   const { search } = req.query;
@@ -29,43 +32,80 @@ const view = (req, res) => {
 const store = (req, res) => {
   const { name, price, stock, status } = req.body;
   const image = req.file;
+
   if (image) {
-    const target = path.join(__dirname, "../../uploads", image.originalname);
-    fs.renameSync(image.path, target);
-    Product.create({
-      name,
-      price,
-      stock,
-      status,
-      image_url: `http://localhost:3000/public/${image.originalname}`,
-    })
-      .then((result) => res.send(result))
-      .catch((error) => res.send(error));
+    const params = {
+      Bucket: process.env.BUCKET,
+      Key: image.originalname,
+      Body: fs.createReadStream(image.path),
+    };
+
+    s3.upload(params, (err, data) => {
+      if (err) {
+        res.send(err);
+      } else {
+        const imageUrl = data.Location;
+        Product.create({
+          name,
+          price,
+          stock,
+          status,
+          image_url: imageUrl,
+        })
+          .then((result) => res.send(result))
+          .catch((error) => res.send(error));
+      }
+    });
   }
 };
 
 const update = (req, res) => {
   const { name, price, stock, status } = req.body;
   const image = req.file;
+
   let updateData = {
     name: name,
     price: price,
     stock: stock,
     status: status,
   };
+
   if (image) {
-    const imagePath = `http://localhost:3000/public/${image.originalname}`;
-    updateData.image_url = imagePath;
-  }
-  Product.findByIdAndUpdate(req.params.id, updateData, { new: true })
-    .then((updatedProduct) => {
-      if (updatedProduct) {
-        res.send(updatedProduct);
+    const params = {
+      Bucket: "your-s3-bucket-name",
+      Key: image.originalname,
+      Body: fs.createReadStream(image.path),
+    };
+
+    s3.upload(params, (err, data) => {
+      if (err) {
+        res.send(err);
       } else {
-        res.status(404).send({ message: "Product not found." });
+        const imageUrl = data.Location;
+        updateData.image_url = imageUrl;
+
+        Product.findByIdAndUpdate(req.params.id, updateData, { new: true })
+          .then((updatedProduct) => {
+            if (updatedProduct) {
+              res.send(updatedProduct);
+            } else {
+              res.status(404).send({ message: "Product not found." });
+            }
+          })
+          .catch((error) => res.send(error));
       }
-    })
-    .catch((error) => res.send(error));
+    });
+  } else {
+    Product.findByIdAndUpdate(req.params.id, updateData, { new: true })
+      .then((updatedProduct) => {
+        if (updatedProduct) {
+          res.send(updatedProduct);
+        } else {
+          res.status(404).send({ message: "Product not found." });
+        }
+      })
+      .catch((error) => res.send(error));
+  }
 };
 
 const destroy = (req, res) => {
