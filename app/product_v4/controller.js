@@ -1,13 +1,7 @@
 const Product = require("./model");
-const fs = require("@cyclic.sh/s3fs");
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 require("dotenv").config();
-
-const s3fsConfig = new fs({
-  bucket: process.env.CYCLIC_BUCKET_NAME,
-  region: "us-west-1",
-});
 
 const index = (req, res) => {
   const { search } = req.query;
@@ -38,12 +32,23 @@ const store = (req, res) => {
   const image = req.file;
 
   if (image) {
-    const imageUrl = `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`;
+    const params = {
+      Bucket: process.env.CYCLIC_BUCKET_NAME,
+      Key: image.originalname,
+      Body: JSON.stringify({
+        name,
+        price,
+        stock,
+        status,
+        image_url: `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`,
+      }),
+    };
 
-    s3fsConfig.writeFile(image.originalname, image.buffer, (err) => {
+    s3.putObject(params, (err, data) => {
       if (err) {
         res.send(err);
       } else {
+        const imageUrl = `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`;
         Product.create({
           name,
           price,
@@ -70,12 +75,23 @@ const update = (req, res) => {
   };
 
   if (image) {
-    const imageUrl = `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`;
+    const params = {
+      Bucket: process.env.CYCLIC_BUCKET_NAME,
+      Key: image.originalname,
+      Body: JSON.stringify({
+        name,
+        price,
+        stock,
+        status,
+        image_url: `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`,
+      }),
+    };
 
-    s3fsConfig.writeFile(image.originalname, image.buffer, (err) => {
+    s3.putObject(params, (err, data) => {
       if (err) {
         res.send(err);
       } else {
+        const imageUrl = `https://${process.env.CYCLIC_BUCKET_NAME}.cyclic.app/${image.originalname}`;
         updateData.image_url = imageUrl;
 
         Product.findByIdAndUpdate(req.params.id, updateData, { new: true })
