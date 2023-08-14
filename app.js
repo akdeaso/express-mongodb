@@ -1,13 +1,14 @@
 require("./config/mongoose");
 const express = require("express");
-const path = require("path");
 const app = express();
 // const productRouter = require("./app/product/routes");
 // const productRouterV2 = require("./app/product_v2/routes");
 const productRouterV3 = require("./app/product_v3/routes");
 const productRouterV4 = require("./app/product_v4/routes");
 const logger = require("morgan");
+const cors = require("cors");
 
+app.use(cors());
 app.use(logger("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
