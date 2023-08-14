@@ -1,6 +1,6 @@
 const Product = require("./model");
 const path = require("path");
-const fs = require("@cyclic.sh/s3fs")(S3_BUCKET_NAME);
+const fs = require("@cyclic.sh/s3fs");
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 require("dotenv").config();
