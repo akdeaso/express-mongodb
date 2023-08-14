@@ -1,6 +1,6 @@
 const Product = require("./model");
 const path = require("path");
-const fs = require("fs");
+const fs = require("@cyclic.sh/s3fs")(S3_BUCKET_NAME);
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 require("dotenv").config();
@@ -35,7 +35,7 @@ const store = (req, res) => {
 
   if (image) {
     const params = {
-      Bucket: process.env.BUCKET,
+      Bucket: process.env.CYCLIC_BUCKET_NAME,
       Key: image.originalname,
       Body: fs.createReadStream(image.path),
     };
@@ -72,7 +72,7 @@ const update = (req, res) => {
 
   if (image) {
     const params = {
-      Bucket: "your-s3-bucket-name",
+      Bucket: process.env.CYCLIC_BUCKET_NAME,
       Key: image.originalname,
       Body: fs.createReadStream(image.path),
     };
