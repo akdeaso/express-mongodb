@@ -11,7 +11,7 @@ const logger = require("morgan");
 app.use(logger("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use("/public", express.static(path.join(__dirname, "uploads")));
+// app.use("/public", express.static(path.join(__dirname, "uploads")));
 // app.use("/api/v1", productRouter);
 // app.use("/api/v2", productRouterV2);
 app.use("/api/v3", productRouterV3);

@@ -1,5 +1,5 @@
 const Product = require("./model");
-const cloudinary = require("../../config/cloudinary");
+const cloudinary = require("../../config/cloudinaryConfig");
 
 const index = (req, res) => {
   const { search } = req.query;
